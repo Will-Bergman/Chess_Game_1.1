@@ -1,0 +1,395 @@
+
+ int getKingSquare(int board[], bool side) {
+
+     if (side) {
+         for (int i = 0; i < ROWS * COLS; i++) {
+             if (board[i] == -7)
+                 return i;
+         }
+     }
+     else {
+         for (int i = 0; i < ROWS * COLS; i++) {
+             if (board[i] == 7)
+                 return i;
+         }
+     }
+     return 0;
+
+ }
+
+ fpoint getSquarePosition(int square) {
+
+     return fpoint(SQUARE1.x + SQUARE_W * (square % 8), SQUARE1.y - SQUARE_H * (square / 8));
+
+ }
+
+ bool isSameRow(int p_square, int t_square) {
+
+     if (p_square / 8 == t_square / 8)
+         return true;
+     else
+         return false;
+
+ }
+
+ bool sameSide(int p_square, int t_square) {
+
+     if ((p_square > 0 && t_square > 0) || (p_square < 0 && t_square < 0))
+         return true;
+     else
+         return false;
+
+ }
+
+ bool otherSide(int p_square, int t_square) {
+
+     if ((p_square > 0 && t_square < 0) || (p_square < 0 && t_square > 0))
+         return true;
+     else
+         return false;
+
+ }
+ 
+ bool checkRowBlocked(int board[], int p_square, int t_square, int col_dif) {
+
+     bool result = true, enemy_found = false;
+
+     if (t_square > p_square) {
+
+         for (int i = 0; i < col_dif; i++) {
+
+             if (sameSide(board[p_square], board[p_square + (i + 1)]) || enemy_found) {
+                 result = false;
+             }
+             if (otherSide(board[p_square], board[p_square + (i + 1)]))
+                 enemy_found = true;
+         }
+     }
+     else {
+         for (int i = 0; i < col_dif; i++) {
+
+             if (sameSide(board[p_square], board[p_square - (i + 1)]) || enemy_found) {
+                 result = false;
+             }
+             if (otherSide(board[p_square], board[p_square - (i + 1)]))
+                 enemy_found = true;
+         }
+     }
+
+     return result;
+
+ }
+
+ bool checkColBlocked(int board[], int p_square, int t_square, int row_dif) {
+
+     bool result = true, enemy_found = false;
+
+     if (t_square > p_square) {
+         for (int i = 0; i < row_dif; i++) {
+
+             if (sameSide(board[p_square], board[p_square + 8 * (i + 1)]) || enemy_found)
+                 result = false;
+             if (otherSide(board[p_square], board[p_square + 8 * (i + 1)]))
+                 enemy_found = true;
+         }
+     }
+     else {
+         for (int i = 0; i < row_dif; i++) {
+
+             if (sameSide(board[p_square], board[p_square - 8*(i + 1)]) || enemy_found)
+                 result = false;
+             if (otherSide(board[p_square], board[p_square - 8 * (i + 1)]))
+                 enemy_found = true;
+         }
+     }
+
+     return result;
+
+ }
+
+ bool checkDiagBlocked(int board[], int p_square, int t_square, int row_dif, int col_dif) {
+
+     bool result = true, enemy_found = false;
+
+     if (row_dif == col_dif && row_dif > 0) {
+         for (int i = 0; i < abs(row_dif); i++) {
+             if (sameSide(board[p_square], board[p_square + 9 * (i + 1)]) || enemy_found)
+                 result = false;
+             if (otherSide(board[p_square], board[p_square + 9 * (i + 1)]))
+                 enemy_found = true;
+         }
+     }
+     else if (row_dif == col_dif && row_dif < 0) {
+         for (int i = 0; i < abs(row_dif); i++) {
+             if (sameSide(board[p_square], board[p_square - 9 * (i + 1)]) || enemy_found)
+                 result = false;
+             if (otherSide(board[p_square], board[p_square - 9 * (i + 1)]))
+                 enemy_found = true;
+         }
+     }
+     else if (row_dif != col_dif && row_dif > 0) {
+         for (int i = 0; i < abs(row_dif); i++) {
+             if (sameSide(board[p_square], board[p_square + 7 * (i + 1)]) || enemy_found)
+                 result = false;
+             if (otherSide(board[p_square], board[p_square + 7 * (i + 1)]))
+                 enemy_found = true;
+         }
+     }
+     else {
+         for (int i = 0; i < abs(row_dif); i++) {
+             if (sameSide(board[p_square], board[p_square - 7 * (i + 1)]) || enemy_found)
+                 result = false;
+             if (otherSide(board[p_square], board[p_square - 7 * (i + 1)]))
+                 enemy_found = true;
+         }
+     }
+
+     return result;
+    
+ }
+
+ bool isDefended(int board[], bool hasMoved[], int p_square, int t_square, bool turn, bool en_passents[]) {
+
+     bool result = false;
+
+     int temp_board[ROWS * COLS];
+     for (int i = 0; i < ROWS * COLS; i++) {
+         temp_board[i] = board[i];
+     }
+     temp_board[p_square] = 0;
+     if (turn)
+         temp_board[t_square] = 7;
+     else
+         temp_board[t_square] = -7;
+     
+     int other_king = getKingSquare(temp_board, turn);
+
+
+     for (int i = 0; i < ROWS * COLS; i++) {
+             if (abs(temp_board[i]) != 7) {
+                 if (isLegal(temp_board, hasMoved, temp_board[i], i, temp_board[t_square], t_square, !turn, en_passents)) {
+                     result = true;
+                     break;
+                 }
+                 if ((other_king - 1 == t_square) || (other_king + 1 == t_square) ||
+                     (other_king - 9 == t_square) || (other_king - 8 == t_square) ||
+                     (other_king - 7 == t_square) || (other_king + 7 == t_square) ||
+                     (other_king + 8 == t_square) || (other_king + 9 == t_square)) {
+                     result = true;
+                     break;
+                 }
+             }
+     }
+
+     return result;
+
+ }
+
+ bool isActuallyLegal(int board[], bool hasMoved[], int p_square, int t_square, bool turn, bool en_passents[]) {
+
+     bool result = true;
+     int this_king;   
+     this_king = getKingSquare(board, !turn);
+
+     int next_board[ROWS * COLS];
+     for (int i = 0; i < ROWS * COLS; i++) {
+         next_board[i] = board[i];
+     }
+     next_board[p_square] = 0;
+     next_board[t_square] = board[p_square];
+    
+     if (!isLegal(board, hasMoved, board[p_square], p_square, board[t_square], t_square, turn, en_passents)) {
+         result = false;
+     }
+     if (abs(board[p_square] != 7)) {
+         for (int i = 0; i < ROWS * COLS; i++) {
+             if (isLegal(next_board, hasMoved, next_board[i], i, next_board[this_king], this_king, !turn, en_passents))
+                 result = false;
+         }
+     }
+     return result;
+
+ }
+
+ bool isLegal(int board[], bool hasMoved[], int piece, int p_square, int other_piece, int t_square, bool turn, bool en_passents[]) {
+     
+     int square_dif = t_square - p_square;
+     int row_dif = t_square / 8 - p_square / 8;
+     int col_dif = t_square % 8 - p_square % 8;
+     
+     if (!sameSide(piece, other_piece)) {
+         if (piece == 1 && turn) {
+             if (p_square / 8 == 1) {
+                 if (t_square == p_square + 8 && other_piece == 0) {
+                     return true;
+                 }
+                 else if (t_square == p_square + 16 && other_piece == 0 && board[p_square + 8] == 0) {
+                     return true;
+                 }
+                 else if ((t_square == p_square + 7 || t_square == p_square + 9) && (t_square / 8) - (p_square / 8) == 1 && other_piece < 0) {
+                     return true;
+                 }
+                 else
+                     return false;
+             }
+             else {
+                 if (t_square == p_square + 8 && other_piece == 0)
+                     return true;
+                 else if (p_square / 8 == 4 && row_dif == 1) {
+                     if (col_dif == 1 && en_passents[p_square % 8 + 9])
+                         return true;
+                     else if (col_dif == -1 && en_passents[p_square % 8 + 7])
+                         return true;
+                     else
+                         return false;
+                 }
+                 else if ((t_square == p_square + 7 || t_square == p_square + 9) && (t_square / 8) - (p_square / 8) == 1 && other_piece < 0)
+                     return true;
+                 else
+                     return false;
+             }
+         }
+         else if (piece == -1 && !turn) {
+             if (p_square / 8 == 6) {
+                 if (t_square == p_square - 8 && other_piece == 0)
+                     return true;
+                 else if (t_square == p_square - 16 && other_piece == 0 && board[p_square - 8] == 0)
+                     return true;
+                 else if ((t_square == p_square - 7 || t_square == p_square - 9) && (t_square / 8) - (p_square / 8) == -1 && other_piece > 0)
+                     return true;
+                 else
+                     return false;
+             }
+             else {
+                 if (t_square == p_square - 8 && other_piece == 0)
+                     return true;
+                 else if (p_square / 8 == 3 && row_dif == -1) {
+                     if (col_dif == 1 && en_passents[(p_square - 7) % 8])
+                         return true;
+                     else if (col_dif == -1 && en_passents[(p_square - 9) % 8])
+                         return true;
+                     else
+                         return false;
+                 }
+                 else if ((t_square == p_square - 7 || t_square == p_square - 9) && (t_square / 8) - (p_square / 8) == -1 && other_piece > 0)
+                     return true;
+                 else
+                     return false;
+             }
+         }
+         else if ((piece == 2 && turn) || (piece == -2 && !turn)) {
+             if (abs(row_dif) + abs(col_dif) == 3 && row_dif != 0 && col_dif != 0)
+                 return true;
+             else
+                 return false;
+         }
+         else if ((piece == 3 && turn) || (piece == -3 && !turn)) {
+             if (abs(row_dif) == abs(col_dif))
+                 if (checkDiagBlocked(board, p_square, t_square, row_dif, col_dif))
+                     return true;
+                 else
+                     return false;
+             else
+                 return false;
+
+
+         }
+         else if ((piece == 5 && turn) || (piece == -5 && !turn)) {
+             if ((abs(row_dif) > 0 && col_dif == 0))
+
+                 if (checkColBlocked(board, p_square, t_square, abs(row_dif)))
+                     return true;
+                 else
+                     return false;
+             else if ((abs(col_dif) > 0 && row_dif == 0))
+                 if (checkRowBlocked(board, p_square, t_square, abs(col_dif)))
+                     return true;
+                 else
+                     return false;
+             else
+                 return false;
+         }
+         else if ((piece == 6 && turn) || (piece == -6 && !turn)) {
+
+             if ((abs(row_dif) > 0 && col_dif == 0))
+                 if (checkColBlocked(board, p_square, t_square, abs(row_dif)))
+                     return true;
+                 else
+                     return false;
+             else if ((abs(col_dif) > 0 && row_dif == 0))
+                 if (checkRowBlocked(board, p_square, t_square, abs(col_dif)))
+                     return true;
+                 else
+                     return false;
+             else if (abs(row_dif) == abs(col_dif))
+                 if (checkDiagBlocked(board, p_square, t_square, row_dif, col_dif))
+                     return true;
+                 else
+                     return false;
+             else
+                 return false;
+
+
+         }
+         else if ((piece == 7 && turn) || (piece == -7 && !turn)) {
+
+             if ((abs(row_dif) + abs(col_dif) == 2 && abs(row_dif) == abs(col_dif)) || (abs(col_dif) + abs(row_dif) == 1)) {
+                 if (!isDefended(board, hasMoved, p_square, t_square, turn, en_passents))
+                     return true;
+                 else
+                     return false;
+             }
+             else if(!hasMoved[p_square] && !hasMoved[p_square + 3] && col_dif == 2 && abs(row_dif == 0) && p_square%8 == 4 && (p_square / 8 == 0 || p_square / 8 == 7)) {
+                // Castle Right
+                 if (isDefended(board, hasMoved, p_square, t_square, turn, en_passents) || isDefended(board, hasMoved, p_square, t_square - 1, turn, en_passents))
+                     return false;
+                 else
+                     return true;
+             }
+             else if (!hasMoved[p_square] && !hasMoved[p_square - 4] && col_dif == -2 && abs(row_dif == 0) && p_square % 8 == 4 && (p_square / 8 == 0 || p_square / 8 == 7)) {
+                 // Castle left
+                 if (isDefended(board, hasMoved, p_square, t_square, turn, en_passents) || isDefended(board, hasMoved, p_square, t_square + 1, turn, en_passents))
+                     return false;
+                 else
+                     return true;
+             }
+             else {
+                 return false;
+             }
+
+         }
+         else {
+             return false;
+         }
+     }
+     else {
+         return false;
+     }
+
+ }
+
+ bool isLegalinCheck(int board[], bool hasMoved[], int piece, int p_square, int other_piece, int t_square, bool turn, bool en_passents[]) {
+
+     bool result = true;
+
+     // Check if legal in general
+     if (isLegal(board, hasMoved, piece, p_square, other_piece, t_square, turn, en_passents)) {
+         // scan next board if move would be made
+         int next_board[ROWS * COLS] = {};
+         for (int i = 0; i < ROWS * COLS; i++) {
+             next_board[i] = board[i];
+         }
+         next_board[p_square] = 0;
+         next_board[t_square] = board[p_square];
+        // If king square is in check still
+        int this_king = getKingSquare(board,!turn);
+        for (int i = 0; i < ROWS * COLS; i++) {
+            if (isLegal(next_board, hasMoved, next_board[i], i, board[this_king], this_king, !turn, en_passents))
+                // Not legal
+                return false;
+        }
+     }
+     else
+         return result;
+
+ }
